@@ -66,8 +66,8 @@ typedef enum
 
 
 /* Exported Constants -----------------------------------------------------------*/
-#define TM1638DisplayStateOFF	0
-#define TM1638DisplayStateON	1
+#define TM1638DisplayStateOFF 0
+#define TM1638DisplayStateON  1
 
 #define TM1638DecimalPoint    0x80
 

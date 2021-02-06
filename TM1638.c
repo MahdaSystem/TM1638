@@ -41,7 +41,7 @@
  * @brief  Instruction description
  */
 #define DataInstructionSet            0x40  // 0b01000000
-#define	DisplayControlInstructionSet  0x80  // 0b10000000
+#define DisplayControlInstructionSet  0x80  // 0b10000000
 #define AddressInstructionSet         0xC0  // 0b11000000
 
 /**
