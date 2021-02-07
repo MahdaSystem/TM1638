@@ -24,14 +24,14 @@ Library for handling TM163 LED display driver.
 
 int main(void)
 {
-	// Put some code here
-	
-	TM1638_Init();
-	TM1638_ConfigDisplay(7, TM1638DisplayStateON);
-	
-	while(1)
-	{
-		// Display the number 1 and Decimal Point in the SEG1 
-		TM1638_SetSingleDigit_HEX(8 | TM1638DecimalPoint, 0);
-	}
+  // Put some code here
+  
+  TM1638_Init();
+  TM1638_ConfigDisplay(7, TM1638DisplayStateON);
+  
+  while(1)
+  {
+    // Display the number 1 and Decimal Point in the SEG1 
+    TM1638_SetSingleDigit_HEX(8 | TM1638DecimalPoint, 0);
+  }
 }
