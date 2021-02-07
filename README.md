@@ -31,7 +31,8 @@ int main(void)
   
   while(1)
   {
-    // Display the number 1 and Decimal Point in the SEG1 
+    // Display the number 8 and Decimal Point in the SEG1 
     TM1638_SetSingleDigit_HEX(8 | TM1638DecimalPoint, 0);
   }
 }
+```
