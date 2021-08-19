@@ -74,27 +74,27 @@ int main(void)
 
 void TM1638_Platform_DioDeInit(void)
 {
-  DATA_PORT &= ~(1<<DATA_NUM);
-  DATA_DDR &= ~(1<<DATA_NUM);
+  DIO_PORT &= ~(1<<DIO_NUM);
+  DIO_DDR &= ~(1<<DIO_NUM);
 }
 void TM1638_Platform_DioConfigOut(void)
 {
-  DATA_DDR |= (1<<DATA_NUM);
+  DIO_DDR |= (1<<DIO_NUM);
 }
 void TM1638_Platform_DioConfigIn(void)
 {
-  DATA_DDR &= ~(1<<DATA_NUM);
+  DIO_DDR &= ~(1<<DIO_NUM);
 }
 void TM1638_Platform_DioWrite(uint8_t Level)
 {
   if (Level)
-    DATA_PORT |= (1<<DATA_NUM);
+    DIO_PORT |= (1<<DIO_NUM);
   else
-    DATA_PORT &= ~(1<<DATA_NUM);
+    DIO_PORT &= ~(1<<DIO_NUM);
 }
 uint8_t TM1638_Platform_DioRead(void)
 {
-  return (DATA_PIN >> DATA_NUM) & 0x01;
+  return (DIO_PIN >> DIO_NUM) & 0x01;
 }
 
 
