@@ -52,18 +52,23 @@ extern "C" {
  * @brief  Specify the target platform
  * @note   Uncomment the line below according to the target platform
  */ 
+// #define TM1638_PLATFORM_AVR
 // #define TM1638_PLATFORM_STM32        // HAL Functions
 // #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
-#if defined(TM1638_PLATFORM_STM32)
-#include "main.h"
-#endif
-
-#if defined(TM1638_PLATFORM_ESP32_IDF)
-#include "driver/gpio.h"
-#endif
-
-#if defined(TM1638_PLATFORM_STM32)
+#if defined(TM1638_PLATFORM_AVR)
+#define TM1638_AVR_CLK      8000000UL
+#define TM1638_DIO_DDR      DDRA
+#define TM1638_DIO_PORT     PORTA
+#define TM1638_DIO_PIN      PINA
+#define TM1638_DIO_NUM      0
+#define TM1638_CLK_DDR      DDRA
+#define TM1638_CLK_PORT     PORTA
+#define TM1638_CLK_NUM      1
+#define TM1638_STB_DDR      DDRA
+#define TM1638_STB_PORT     PORTA
+#define TM1638_STB_NUM      2
+#elif defined(TM1638_PLATFORM_STM32)
 /**
  * @brief  Specify IO Pins of STM32 connected to TM1638
  */
@@ -73,15 +78,13 @@ extern "C" {
 #define TM1638_DIO_PIN      GPIO_PIN_1
 #define TM1638_STB_GPIO     GPIOA
 #define TM1638_STB_PIN      GPIO_PIN_2
-#endif
-
-#if defined(TM1638_PLATFORM_ESP32_IDF)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
 /**
  * @brief  Specify IO Pins of ESP32 connected to TM1638
  */
-#define TM1638_CLK_GPIO     GPIO_NUM_0
-#define TM1638_DIO_GPIO     GPIO_NUM_1
-#define TM1638_STB_GPIO     GPIO_NUM_2
+#define TM1638_CLK_GPIO     GPIO_NUM_13
+#define TM1638_DIO_GPIO     GPIO_NUM_14
+#define TM1638_STB_GPIO     GPIO_NUM_15
 #endif
 
 
@@ -92,58 +95,8 @@ extern "C" {
  ==================================================================================
  */
 
-/**
- * @brief  Initialize platfor device to communicate TM1638.
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
 TM1638_Result_t
-TM1638_Platform_Init(void);
-
-
-/**
- * @brief  Send STOP signal to TM1638
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_Stop(void);
-
-
-/**
- * @brief  Send START signal to TM1638 
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_Start(void);
-
-
-/**
- * @brief  Send data bytes
- * @param  Data: Pointer to send data
- * @param  NumOfBytes: Number of bytes to send
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_WriteBytes(const uint8_t *Data, uint8_t NumOfBytes);
-
-
-/**
- * @brief  Receive data bytes 
- * @param  Data: Pointer to save data
- * @param  NumOfBytes: Number of bytes to read
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_ReadBytes(uint8_t *Data, uint8_t NumOfBytes);
+TM1638_Platform_Init(TM1638_Handler_t *Handler);
 
 
 

@@ -36,83 +36,216 @@
 /* Includes ---------------------------------------------------------------------*/
 #include "TM1638_platform.h"
 
+#if defined(TM1638_PLATFORM_AVR)
+#include <avr/io.h>
+#define F_CPU TM1638_AVR_CLK
+#include <util/delay.h>
+#elif defined(TM1638_PLATFORM_STM32)
+#include "main.h"
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+#include "driver/gpio.h"
+#endif
 
-/* Private Constants ------------------------------------------------------------*/
-#define TM1638TM1638_DelayUs  1
 
 
-/* Private Macro ----------------------------------------------------------------*/
+/**
+ ==================================================================================
+                           ##### Private Functions #####                           
+ ==================================================================================
+ */
+
 #if defined(TM1638_PLATFORM_STM32)
-#define TM1638_SetGPIO_OUT(GPIO, PIN) GPIO_InitStruct.Pin = PIN;\
-                                      GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;\
-                                      GPIO_InitStruct.Pull = GPIO_NOPULL;\
-                                      GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;\
-                                      HAL_GPIO_Init(GPIO, &GPIO_InitStruct);
+static void TM1638_SetGPIO_OUT(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = GPIO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+}
+									
+static void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = GPIO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+}
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+static void TM1638_SetGPIO_OUT(uint32_t GPIO_Pad)
+{
+  gpio_config_t TM1638_GPIO_CONF;
+  TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
+  TM1638_GPIO_CONF.mode = GPIO_MODE_OUTPUT;
+  TM1638_GPIO_CONF.pull_up_en = GPIO_PULLUP_DISABLE;
+  TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  TM1638_GPIO_CONF.intr_type = GPIO_INTR_DISABLE;
+  gpio_config(&TM1638_GPIO_CONF);
+}
 
-#define TM1638_SetGPIO_IN_PU(GPIO, PIN) GPIO_InitStruct.Pin = PIN;\
-                                        GPIO_InitStruct.Mode = GPIO_MODE_INPUT;\
-                                        GPIO_InitStruct.Pull = GPIO_PULLUP;\
-                                        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;\
-                                        HAL_GPIO_Init(GPIO, &GPIO_InitStruct);
-
-#define TM1638_DIO_OUTPUT()     TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN)
-#define TM1638_DIO_INPUT()      TM1638_SetGPIO_IN_PU(TM1638_DIO_GPIO, TM1638_DIO_PIN)
-#define TM1638_DIO_HIGH()       HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, GPIO_PIN_SET)
-#define TM1638_DIO_LOW()        HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, GPIO_PIN_RESET)
-#define TM1638_DIO_READ()       HAL_GPIO_ReadPin(TM1638_DIO_GPIO, TM1638_DIO_PIN)
-
-#define TM1638_CLK_OUTPUT()     TM1638_SetGPIO_OUT(TM1638_CLK_GPIO, TM1638_CLK_PIN)
-#define TM1638_CLK_HIGH()       HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, GPIO_PIN_SET)
-#define TM1638_CLK_LOW()        HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, GPIO_PIN_RESET) 
-
-#define TM1638_STB_OUTPUT()     TM1638_SetGPIO_OUT(TM1638_STB_GPIO, TM1638_STB_PIN)
-#define TM1638_STB_HIGH()       HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, GPIO_PIN_SET)
-#define TM1638_STB_LOW()        HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, GPIO_PIN_RESET)
-
-#define TM1638_DelayUs(Delay)   for(uint32_t DelayCounter = 0; DelayCounter<1000*Delay; DelayCounter++) DelayCounter = DelayCounter
+static void TM1638_SetGPIO_IN_PU(uint32_t GPIO_Pad)
+{
+  gpio_config_t TM1638_GPIO_CONF;
+  TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
+  TM1638_GPIO_CONF.mode = GPIO_MODE_DEF_INPUT;
+  TM1638_GPIO_CONF.pull_up_en = GPIO_PULLUP_ENABLE;
+  TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  TM1638_GPIO_CONF.intr_type = GPIO_INTR_DISABLE;
+  gpio_config(&TM1638_GPIO_CONF);
+}
 #endif
 
-#if defined(TM1638_PLATFORM_ESP32_IDF)
-#define TM1638_SetGPIO_OUT(GPIO_Pad)  TM1638_GPIO_CONF.pin_bit_mask	= GPIO_Pad;\
-                                      TM1638_GPIO_CONF.mode         = GPIO_MODE_OUTPUT;\
-                                      TM1638_GPIO_CONF.pull_up_en   = GPIO_PULLUP_DISABLE;\
-                                      TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;\
-                                      TM1638_GPIO_CONF.intr_type    = GPIO_INTR_DISABLE;\
-                                      gpio_config(&TM1638_GPIO_CONF);
-              
 
-#define TM1638_SetGPIO_IN_PU(GPIO_Pad)  TM1638_GPIO_CONF.pin_bit_mask	= GPIO_Pad;\
-                                        TM1638_GPIO_CONF.mode         = GPIO_MODE_INPUT;\
-                                        TM1638_GPIO_CONF.pull_up_en   = GPIO_PULLUP_ENABLE;\
-                                        TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;\
-                                        TM1638_GPIO_CONF.intr_type    = GPIO_INTR_DISABLE;\
-                                        gpio_config(&TM1638_GPIO_CONF);
-
-#define TM1638_DIO_OUTPUT()   TM1638_SetGPIO_OUT(1<<TM1638_DIO_GPIO)
-#define TM1638_DIO_INPUT()    TM1638_SetGPIO_IN_PU(1<<TM1638_DIO_GPIO)
-#define TM1638_DIO_HIGH()     gpio_set_level(TM1638_DIO_GPIO, 1)
-#define TM1638_DIO_LOW()      gpio_set_level(TM1638_DIO_GPIO, 0)
-#define TM1638_DIO_READ()     gpio_get_level(TM1638_DIO_GPIO)
-
-#define TM1638_CLK_OUTPUT()   TM1638_SetGPIO_OUT(1<<TM1638_CLK_GPIO)
-#define TM1638_CLK_HIGH()     gpio_set_level(TM1638_CLK_GPIO, 1)
-#define TM1638_CLK_LOW()      gpio_set_level(TM1638_CLK_GPIO, 0)
-
-#define TM1638_STB_OUTPUT()   TM1638_SetGPIO_OUT(1<<TM1638_STB_GPIO)
-#define TM1638_STB_HIGH()     gpio_set_level(TM1638_STB_GPIO, 1)
-#define TM1638_STB_LOW()      gpio_set_level(TM1638_STB_GPIO, 0)
-
-#define TM1638_DelayUs(Delay) 
+static void TM1638_Platform_DioDeInit(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
+  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_reset_pin(TM1638_DIO_GPIO);
 #endif
+}
 
-/* Private variables ------------------------------------------------------------*/
-#if defined(TM1638_PLATFORM_STM32)
-GPIO_InitTypeDef GPIO_InitStruct = {0};
+static void TM1638_Platform_DioConfigOut(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_DIO_DDR |= (1<<TM1638_DIO_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  TM1638_SetGPIO_OUT(1<<TM1638_DIO_GPIO);
 #endif
+}
 
-#if defined(TM1638_PLATFORM_ESP32_IDF)
-gpio_config_t TM1638_GPIO_CONF;
+static void TM1638_Platform_DioConfigIn(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  TM1638_SetGPIO_IN_PU(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  TM1638_SetGPIO_IN_PU(1<<TM1638_DIO_GPIO);
 #endif
+}
+
+static void TM1638_Platform_DioWrite(uint8_t Level)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  if (Level)
+    TM1638_DIO_PORT |= (1<<TM1638_DIO_NUM);
+  else
+    TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, Level);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_set_level(TM1638_DIO_GPIO, Level);
+#endif
+}
+
+uint8_t TM1638_Platform_DioRead(static void)
+{
+  uint8_t Result = 1;
+#if defined(TM1638_PLATFORM_AVR)
+  Result = (DATA_PIN >> DATA_NUM) & 0x01;
+#elif defined(TM1638_PLATFORM_STM32)
+  Result = HAL_GPIO_ReadPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  Result = gpio_get_level(TM1638_DIO_GPIO);
+#endif
+  return Result;
+}
+
+
+static void TM1638_Platform_ClkDeInit(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
+  TM1638_CLK_DDR &= ~(1<<TM1638_CLK_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_reset_pin(TM1638_CLK_GPIO);
+#endif
+}
+
+static void TM1638_Platform_ClkConfigOut(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_CLK_DDR |= (1<<TM1638_CLK_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  TM1638_SetGPIO_OUT(TM1638_CLK_GPIO, TM1638_CLK_PIN);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  TM1638_SetGPIO_OUT(1<<TM1638_CLK_GPIO);
+#endif
+}
+
+static void TM1638_Platform_ClkWrite(uint8_t Level)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  if (Level)
+    TM1638_CLK_PORT |= (1<<TM1638_CLK_NUM);
+  else
+    TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_set_level(TM1638_CLK_GPIO, Level);
+#endif
+}
+
+
+static void TM1638_Platform_StbDeInit(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
+  TM1638_STB_DDR &= ~(1<<TM1638_STB_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_reset_pin(TM1638_STB_GPIO);
+#endif
+}
+
+static void TM1638_Platform_StbConfigOut(static void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_STB_DDR |= (1<<TM1638_STB_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  TM1638_SetGPIO_OUT(TM1638_STB_GPIO, TM1638_STB_PIN);
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  TM1638_SetGPIO_OUT(1<<TM1638_STB_GPIO);
+#endif
+}
+
+static void TM1638_Platform_StbWrite(uint8_t Level)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  if (Level)
+    TM1638_STB_PORT |= (1<<TM1638_STB_NUM);
+  else
+    TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+  HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level)
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_set_level(TM1638_STB_GPIO, Level);
+#endif
+}
+
+
+static void TM1638_Platform_DelayUs(uint8_t Delay)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  for (; Delay; --Delay)
+    _delay_us(1);
+#elif defined(TM1638_PLATFORM_STM32)
+  for(uint32_t DelayCounter = 0; DelayCounter<100*Delay; DelayCounter++)
+    DelayCounter = DelayCounter;
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  ets_delay_us(Delay);
+#endif
+}
 
 
 
@@ -121,129 +254,22 @@ gpio_config_t TM1638_GPIO_CONF;
                             ##### Public Functions #####                           
  ==================================================================================
  */
- 
-/**
- * @brief  Initialize platfor device to communicate TM1638.
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
+
 TM1638_Result_t
-TM1638_Platform_Init(void)
+TM1638_Platform_Init(TM1638_Handler_t *Handler)
 {
-  TM1638_CLK_OUTPUT();
-  TM1638_STB_OUTPUT();
-  TM1638_DIO_OUTPUT();
-
-  TM1638_CLK_HIGH();
-  TM1638_STB_HIGH();
-  TM1638_DIO_HIGH();
-
-  return TM1638_OK;
-}
-
- 
-/**
- * @brief  Send STOP signal to TM1638
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_Stop(void)
-{
-  TM1638_STB_HIGH();
-
-  // TM1638_DelayUs(TM1638TM1638_DelayUs);
-
-  return TM1638_OK;
-}
-
-
-/**
- * @brief  Send START signal to TM1638 
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_Start(void)
-{
-  TM1638_STB_LOW();
-
-  return TM1638_OK;
-}
-
-
-/**
- * @brief  Send data bytes
- * @param  Data: Pointer to send data
- * @param  NumOfBytes: Number of bytes to send
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_WriteBytes(const uint8_t *Data, uint8_t NumOfBytes)
-{
-  uint8_t i, j, Buff;
-
-  TM1638_DIO_OUTPUT();
-
-  for (j = 0; j < NumOfBytes; j++)
-  {
-    for (i = 0, Buff = Data[j]; i < 8; ++i, Buff >>= 1)
-    {
-      TM1638_CLK_LOW();
-      TM1638_DelayUs(TM1638TM1638_DelayUs);
-
-      if (Buff & 0x01)
-        TM1638_DIO_HIGH();
-      else
-        TM1638_DIO_LOW();
-
-      TM1638_CLK_HIGH();
-      TM1638_DelayUs(TM1638TM1638_DelayUs);
-    }
-  }
-
-  return TM1638_OK;
-}
-
-
-/**
- * @brief  Receive data bytes 
- * @param  Data: Pointer to save data
- * @param  NumOfBytes: Number of bytes to read
- * @retval TM1638_Result_t
- *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
- */
-TM1638_Result_t
-TM1638_Platform_ReadBytes(uint8_t *Data, uint8_t NumOfBytes)
-{
-  uint8_t i, j, Buff;
-
-  TM1638_DIO_INPUT();
-
-  TM1638_DelayUs(5);
-
-  for (j = 0; j < NumOfBytes; j++)
-  {
-    for (i = 0, Buff = 0; i < 8; i++)
-    {
-      TM1638_CLK_LOW();
-      TM1638_DelayUs(TM1638TM1638_DelayUs);
-      TM1638_CLK_HIGH();
-
-      Buff |= (TM1638_DIO_READ() << i);
-
-      TM1638_DelayUs(TM1638TM1638_DelayUs);
-    }
-
-    Data[j] = Buff;
-    TM1638_DelayUs(2 * TM1638TM1638_DelayUs);
-  }
+  Handler->DioDeInit     = TM1638_Platform_DioDeInit;
+  Handler->DioConfigOut  = TM1638_Platform_DioConfigOut;
+  Handler->DioConfigIn   = TM1638_Platform_DioConfigIn;
+  Handler->DioWrite      = TM1638_Platform_DioWrite;
+  Handler->DioRead       = TM1638_Platform_DioRead;
+  Handler->ClkDeInit     = TM1638_Platform_ClkDeInit;
+  Handler->ClkConfigOut  = TM1638_Platform_ClkConfigOut;
+  Handler->ClkWrite      = TM1638_Platform_ClkWrite;
+  Handler->StbDeInit     = TM1638_Platform_StbDeInit;
+  Handler->StbConfigOut  = TM1638_Platform_StbConfigOut;
+  Handler->StbWrite      = TM1638_Platform_StbWrite;
+  Handler->DelayUs       = TM1638_Platform_DelayUs;
 
   return TM1638_OK;
 }

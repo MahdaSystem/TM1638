@@ -33,7 +33,6 @@
 
 /* Includes ---------------------------------------------------------------------*/
 #include "TM1638.h"
-#include "TM1638_platform.h"
 
 
 /* Private Constants ------------------------------------------------------------*/
@@ -85,10 +84,6 @@ const uint8_t HexTo7Seg[16] =
   0x71  // F
 };
 
-#if (TM1638SegType)
-uint8_t Tm1638DisplayRegister[16] = { 0 };
-#endif // (TM1638SegType)
-
 
 
 /**
@@ -97,34 +92,99 @@ uint8_t Tm1638DisplayRegister[16] = { 0 };
  ==================================================================================
  */
 
+static inline void
+TM1638_Start(TM1638_Handler_t *Handler)
+{
+  Handler->StbWrite(0);
+}
+
+static inline void
+TM1638_Stop(TM1638_Handler_t *Handler)
+{
+  Handler->StbWrite(1);
+}
+
 static void
-TM1638_SetMultipleDisplayRegister(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Count)
+TM1638_WriteBytes(TM1638_Handler_t *Handler,
+                  const uint8_t *Data, uint8_t NumOfBytes)
+{
+   uint8_t i, j, Buff;
+
+  Handler->DioConfigOut();
+
+  for (j = 0; j < NumOfBytes; j++)
+  {
+    for (i = 0, Buff = Data[j]; i < 8; ++i, Buff >>= 1)
+    {
+      Handler->ClkWrite(0);
+      Handler->DelayUs(1);
+
+      Handler->DioWrite(Buff & 0x01);
+
+      Handler->ClkWrite(1);
+      Handler->DelayUs(1);
+    }
+  }
+}
+
+static void
+TM1638_ReadBytes(TM1638_Handler_t *Handler,
+                 const uint8_t *Data, uint8_t NumOfBytes)
+{
+  uint8_t i, j, Buff;
+
+  Handler->DataConfigIn();
+  Handler->DelayUs(5);
+
+  for (j = 0; j < NumOfBytes; j++)
+  {
+    for (i = 0, Buff = 0; i < 8; i++)
+    {
+      Handler->ClkWrite(0);
+      Handler->DelayUs(1);
+      Handler->ClkWrite(1);
+      Handler->ClkWrite(0);
+
+      Buff |= (Handler->DioRead() << i);
+
+      Handler->DelayUs(1);
+    }
+
+    Data[j] = Buff;
+    Handler->DelayUs(2);
+  }
+}
+
+static void
+TM1638_SetMultipleDisplayRegister(TM1638_Handler_t *Handler,
+                                  const uint8_t *DigitData,
+                                  uint8_t StartAddr, uint8_t Count)
 {
   uint8_t Data = DataInstructionSet | WriteDataToRegister |
                  AutoAddressAdd | NormalMode;
 
-  TM1638_Platform_Start();
-  TM1638_Platform_WriteBytes(&Data, 1);
-  TM1638_Platform_Stop();
+  TM1638_Start(Handler);
+  TM1638_WriteBytes(Handler, &Data, 1);
+  TM1638_Stop(Handler);
 
   Data = AddressInstructionSet | StartAddr;
 
-  TM1638_Platform_Start();
-  TM1638_Platform_WriteBytes(&Data, 1);
-  TM1638_Platform_WriteBytes(DigitData, Count);
-  TM1638_Platform_Stop();
+  TM1638_Start(Handler);
+  TM1638_WriteBytes(Handler, &Data, 1);
+  TM1638_WriteBytes(Handler, DigitData, Count);
+  TM1638_Stop(Handler);
 }
 
 static TM1638_Result_t
-TM1638_ScanKeyRegs(uint8_t *KeyRegs)
+TM1638_ScanKeyRegs(TM1638_Handler_t *Handler, uint8_t *KeyRegs)
 {
   uint8_t Data = DataInstructionSet | ReadKeyScanData |
                  AutoAddressAdd | NormalMode;
 
-  TM1638_Platform_Start();
-  TM1638_Platform_WriteBytes(&Data, 1);
-  TM1638_Platform_ReadBytes(KeyRegs, 4);
-  TM1638_Platform_Stop();
+  TM1638_Start(Handler);
+  TM1638_WriteBytes(Handler, &Data, 1);
+  TM1638_ReadBytes(Handler, KeyRegs, 4);
+  TM1638_Stop(Handler);
 
   return TM1638_OK;
 }
@@ -138,15 +198,53 @@ TM1638_ScanKeyRegs(uint8_t *KeyRegs)
  */
 
 /**
- * @brief  Initialize TM1638.  
+ * @brief  Initialize TM1638.
+ * @param  Handler: Pointer to handler
+ * @param  Type: Determine the type of display
+ *         - 0: Common Cathode
+ *         - 1: Common Anode
+ * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
  *         - TM1638_FAIL: Operation failed.
  */
 TM1638_Result_t
-TM1638_Init(void)
+TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type)
 {
-  return TM1638_Platform_Init();
+#if (TM1638_SUPPORT_COM_ANODE)
+  uint8_t i;
+
+  Handler->DisplayType = Type ? 1:0;
+  for (i = 0; i < 16; i++)
+    Handler->DisplayRegister[i] = 0;
+#endif
+
+  Handler->DioConfigOut();
+  Handler->ClkConfigOut();
+  Handler->StbConfigOut();
+
+  Handler->DioWrite(1);
+  Handler->ClkWrite(1);
+  Handler->StbWrite(1);
+
+  return TM1638_OK;
+}
+
+
+/**
+ * @brief  De-Initialize TM1638.
+ * @param  Handler: Pointer to handler
+ * @retval TM1638_Result_t
+ *         - TM1638_OK: Operation was successful.
+ *         - TM1638_FAIL: Operation failed.
+ */
+TM1638_Result_t
+TM1638_DeInit(TM1638_Handler_t *Handler)
+{
+  Handler->DioDeInit();
+  Handler->ClkDeInit();
+  Handler->StbDeInit();
+  return TM1638_OK;
 }
 
 
@@ -159,6 +257,7 @@ TM1638_Init(void)
 
 /**
  * @brief  Config display parameters
+ * @param  Handler: Pointer to handler
  * @param  Brightness: Set brightness level
  *         - 0: Display pulse width is set as 1/16
  *         - 1: Display pulse width is set as 2/16
@@ -178,15 +277,16 @@ TM1638_Init(void)
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_ConfigDisplay(uint8_t Brightness, uint8_t DisplayState)
+TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
+                     uint8_t Brightness, uint8_t DisplayState)
 {
   uint8_t Data = DisplayControlInstructionSet;
   Data |= Brightness & 0x07;
   Data |= (DisplayState) ? (ShowTurnOn) : (ShowTurnOff);
 
-  TM1638_Platform_Start();
-  TM1638_Platform_WriteBytes(&Data, 1);
-  TM1638_Platform_Stop();
+  TM1638_Start(Handler);
+  TM1638_WriteBytes(Handler, &Data, 1);
+  TM1638_Stop(Handler);
 
   return TM1638_OK;
 }
@@ -194,6 +294,7 @@ TM1638_ConfigDisplay(uint8_t Brightness, uint8_t DisplayState)
 
 /**
  * @brief  Set data to single digit in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Digit data
  * @param  DigitPos: Digit position
  *         - 0: Seg1
@@ -207,20 +308,17 @@ TM1638_ConfigDisplay(uint8_t Brightness, uint8_t DisplayState)
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetSingleDigit(uint8_t DigitData, uint8_t DigitPos)
+TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
+                      uint8_t DigitData, uint8_t DigitPos)
 {
-#if (TM1638SegType)
-  TM1638_SetMultipleDigit(&DigitData, DigitPos, 1);
-#else
-  TM1638_SetMultipleDisplayRegister(DigitPos, 1, &DigitData);
-#endif
-
+  TM1638_SetMultipleDigit(Handler, &DigitData, DigitPos, 1);
   return TM1638_OK;
 }
 
 
 /**
  * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data
  * @param  StartAddr: First digit position
  *         - 0: Seg1
@@ -235,45 +333,49 @@ TM1638_SetSingleDigit(uint8_t DigitData, uint8_t DigitPos)
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Count)
+TM1638_SetMultipleDigit(TM1638_Handler_t *Handler,
+                        const uint8_t *DigitData,
+                        uint8_t StartAddr, uint8_t Count)
 {
+#if (TM1638_SUPPORT_COM_ANODE)
   uint8_t Shift = 0;
   uint8_t DigitDataBuff = 0;
   uint8_t i = 0, j = 0;
-
-#if (TM1638SegType)
-  for (j = 0; j < Count; j++)
+  
+  if (Handler->DisplayType)
   {
-    DigitDataBuff = DigitData[j];
+    for (j = 0; j < Count; j++)
+    {
+      DigitDataBuff = DigitData[j];
 
-    if ((j + StartAddr) >= 0 && (j + StartAddr) <= 7)
-    {
-      Shift = j + StartAddr;
-      i = 0;
-    }
-    else if ((j + StartAddr) == 8 || (j + StartAddr) == 9)
-    {
-      Shift = (j + StartAddr) - 8;
-      i = 1;
-    }
-    else
-    {
-      i = 16;
-    }
-
-    for (; i < 16; i += 2, DigitDataBuff >>= 1)
-    {
-      if (DigitDataBuff & 0x01)
-        Tm1638DisplayRegister[i] |= (1 << Shift);
+      if ((j + StartAddr) >= 0 && (j + StartAddr) <= 7)
+      {
+        Shift = j + StartAddr;
+        i = 0;
+      }
+      else if ((j + StartAddr) == 8 || (j + StartAddr) == 9)
+      {
+        Shift = (j + StartAddr) - 8;
+        i = 1;
+      }
       else
-        Tm1638DisplayRegister[i] &= ~(1 << Shift);
-    }
-  }
-  TM1638_SetMultipleDisplayRegister(Tm1638DisplayRegister, 0, 16);
+      {
+        i = 16;
+      }
 
-#else
-  TM1638_SetMultipleDisplayRegister(StartAddr, Count, DigitData);
+      for (; i < 16; i += 2, DigitDataBuff >>= 1)
+      {
+        if (DigitDataBuff & 0x01)
+          Handler->DisplayRegister[i] |= (1 << Shift);
+        else
+          Handler->DisplayRegister[i] &= ~(1 << Shift);
+      }
+    }
+    TM1638_SetMultipleDisplayRegister(Handler, Handler->DisplayRegister, 0, 16);
+  }
+  else
 #endif
+    TM1638_SetMultipleDisplayRegister(Handler, StartAddr, Count, DigitData);
 
   return TM1638_OK;
 }
@@ -281,6 +383,7 @@ TM1638_SetMultipleDigit(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Cou
 
 /**
  * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Digit data (0, 1, ... , 15, a, A, b, B, ... , f, F) 
  * @param  DigitPos: Digit position
  *         - 0: Seg1
@@ -294,7 +397,8 @@ TM1638_SetMultipleDigit(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Cou
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetSingleDigit_HEX(uint8_t DigitData, uint8_t DigitPos)
+TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
+                          uint8_t DigitData, uint8_t DigitPos)
 {
   uint8_t DigitDataHEX = 0;
   uint8_t DecimalPoint = DigitData & 0x80;
@@ -345,12 +449,13 @@ TM1638_SetSingleDigit_HEX(uint8_t DigitData, uint8_t DigitPos)
     }
   }
 
-  return TM1638_SetSingleDigit(DigitDataHEX, DigitPos);
+  return TM1638_SetSingleDigit(Handler, DigitDataHEX, DigitPos);
 }
 
 
 /**
  * @brief  Set data to multiple digits in hexadecimal format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data. 
  *                    (0, 1, ... , 15, a, A, b, B, ... , f, F)
  * @param  StartAddr: First digit position
@@ -366,7 +471,9 @@ TM1638_SetSingleDigit_HEX(uint8_t DigitData, uint8_t DigitPos)
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Count)
+TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler,
+                            const uint8_t *DigitData,
+                            uint8_t StartAddr, uint8_t Count)
 {
   uint8_t DigitDataHEX[10];
   uint8_t DecimalPoint = 0;
@@ -420,7 +527,9 @@ TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t
     }
   }
 
-  return TM1638_SetMultipleDigit((const uint8_t *)DigitDataHEX, StartAddr, Count);
+  return TM1638_SetMultipleDigit(Handler,
+                                 (const uint8_t *)DigitDataHEX,
+                                 StartAddr, Count);
 }
 
 
@@ -439,6 +548,7 @@ TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t
  *         K2  --  |K2_SEG1|    |K2_SEG2|    |K2_SEG3|    ......    |K2_SEG8|
  *         K3  --  |K3_SEG1|    |K3_SEG2|    |K3_SEG3|    ......    |K3_SEG8|
  * 
+ * @param  Handler: Pointer to handler
  * @param  Keys: pointer to save key scan result
  *         - bit0=>K1_SEG1, bit1=>K1_SEG2, ..., bit7=>K1_SEG8,
  *         - bit8=>K2_SEG1, bit9=>K2_SEG2, ..., bit15=>K2_SEG8,
@@ -449,13 +559,13 @@ TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_ScanKeys(uint32_t *Keys)
+TM1638_ScanKeys(TM1638_Handler_t *Handler, uint32_t *Keys)
 {
   uint8_t KeyRegs[4];
   uint32_t KeysBuff = 0;
   uint8_t Kn = 0x01;
 
-  TM1638_ScanKeyRegs(KeyRegs);
+  TM1638_ScanKeyRegs(Handler, KeyRegs);
 
   for (uint8_t i = 0; i < 3; i++)
   {

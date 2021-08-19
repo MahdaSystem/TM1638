@@ -43,26 +43,12 @@ extern "C" {
 /* Includes ---------------------------------------------------------------------*/
 #include <stdint.h>
 
-  
-/* Exported Data Types ----------------------------------------------------------*/
-/**
- * @brief  Data type of library functions result
- */
-typedef enum
-{
-  TM1638_OK      = 0,
-  TM1638_FAIL    = -1,
-} TM1638_Result_t;
-
 
 /* Functionality Options --------------------------------------------------------*/
 /**
- * @brief  Specify the display type
- *         Set this constant according to display type:
- *         - 0: Common Cathode Seven-Segment
- *         - 1: Common Anode Seven-Segment
+ * @brief  Enable support for Common Anode displays
  */   
-#define TM1638SegType   1
+#define TM1638_SUPPORT_COM_ANODE  1
 
 
 /* Exported Constants -----------------------------------------------------------*/
@@ -70,6 +56,70 @@ typedef enum
 #define TM1638DisplayStateON  1
 
 #define TM1638DecimalPoint    0x80
+
+  
+/* Exported Data Types ----------------------------------------------------------*/
+/**
+ * @brief  Handler data type
+ * @note   User must initialize this this functions before using library:
+ *         - DioDeInit
+ *         - DioConfigOut
+ *         - DioConfigIn
+ *         - DioWrite
+ *         - DioRead
+ *         - ClkDeInit
+ *         - ClkConfigOut
+ *         - ClkWrite
+ *         - StbDeInit
+ *         - StbConfigOut
+ *         - StbWrite
+ *         - DelayUs
+ */
+typedef struct TM1638_Handler_s
+{
+  // Uninitialize the GPIO that connected to DIO PIN of SHT1x
+  void (*DioDeInit)(void);
+  // Config the GPIO that connected to DIO PIN of SHT1x as output
+  void (*DioConfigOut)(void);
+  // Config the GPIO that connected to DIO PIN of SHT1x as input
+  void (*DioConfigIn)(void);
+  // Set level of the GPIO that connected to DIO PIN of SHT1x
+  void (*DioWrite)(uint8_t);
+  // Read the GPIO that connected to DIO PIN of SHT1x
+  uint8_t (*DioRead)(void);
+
+  // Uninitialize the GPIO that connected to CLK PIN of SHT1x
+  void (*ClkDeInit)(void);
+  // Config the GPIO that connected to CLK PIN of SHT1x as output
+  void (*ClkConfigOut)(void);
+  // Set level of the GPIO that connected to CLK PIN of SHT1x
+  void (*ClkWrite)(uint8_t);
+
+  // Uninitialize the GPIO that connected to STB PIN of SHT1x
+  void (*StbDeInit)(void);
+  // Config the GPIO that connected to STB PIN of SHT1x as output
+  void (*StbConfigOut)(void);
+  // Set level of the GPIO that connected to STB PIN of SHT1x
+  void (*StbWrite)(uint8_t);
+
+  // Delay (us)
+  void (*DelayUs)(uint8_t);
+
+#if (TM1638_SUPPORT_COM_ANODE)
+  uint8_t DisplayType;
+  uint8_t DisplayRegister[16];
+#endif
+} TM1638_Handler_t;
+
+
+/**
+ * @brief  Data type of library functions result
+ */
+typedef enum TM1638_Result_e
+{
+  TM1638_OK      = 0,
+  TM1638_FAIL    = -1,
+} TM1638_Result_t;
 
 
 
@@ -80,13 +130,29 @@ typedef enum
  */
 
 /**
- * @brief  Initialize TM1638.  
+ * @brief  Initialize TM1638.
+ * @param  Handler: Pointer to handler
+ * @param  Type: Determine the type of display
+ *         - 0: Common-Cathode
+ *         - 1: Common-Anode
+ * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
  *         - TM1638_FAIL: Operation failed.
  */
 TM1638_Result_t
-TM1638_Init(void);
+TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type);
+
+
+/**
+ * @brief  De-Initialize TM1638.
+ * @param  Handler: Pointer to handler
+ * @retval TM1638_Result_t
+ *         - TM1638_OK: Operation was successful.
+ *         - TM1638_FAIL: Operation failed.
+ */
+TM1638_Result_t
+TM1638_DeInit(TM1638_Handler_t *Handler);
  
 
 
@@ -98,6 +164,7 @@ TM1638_Init(void);
 
 /**
  * @brief  Config display parameters
+ * @param  Handler: Pointer to handler
  * @param  Brightness: Set brightness level
  *         - 0: Display pulse width is set as 1/16
  *         - 1: Display pulse width is set as 2/16
@@ -117,11 +184,13 @@ TM1638_Init(void);
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_ConfigDisplay(uint8_t Brightness, uint8_t DisplayState);
+TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
+                     uint8_t Brightness, uint8_t DisplayState);
 
 
 /**
  * @brief  Set data to single digit in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Digit data
  * @param  DigitPos: Digit position
  *         - 0: Seg1
@@ -135,11 +204,13 @@ TM1638_ConfigDisplay(uint8_t Brightness, uint8_t DisplayState);
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetSingleDigit(uint8_t DigitData, uint8_t DigitPos);
+TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
+                      uint8_t DigitData, uint8_t DigitPos);
 
 
 /**
  * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data
  * @param  StartAddr: First digit position
  *         - 0: Seg1
@@ -154,11 +225,14 @@ TM1638_SetSingleDigit(uint8_t DigitData, uint8_t DigitPos);
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Count);
+TM1638_SetMultipleDigit(TM1638_Handler_t *Handler,
+                        const uint8_t *DigitData,
+                        uint8_t StartAddr, uint8_t Count);
 
 
 /**
  * @brief  Set data to multiple digits in 7-segment format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Digit data (0, 1, ... , 15, a, A, b, B, ... , f, F) 
  * @param  DigitPos: Digit position
  *         - 0: Seg1
@@ -172,11 +246,13 @@ TM1638_SetMultipleDigit(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Cou
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetSingleDigit_HEX(uint8_t DigitData, uint8_t DigitPos);
+TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
+                          uint8_t DigitData, uint8_t DigitPos);
 
 
 /**
  * @brief  Set data to multiple digits in hexadecimal format
+ * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data. 
  *                    (0, 1, ... , 15, a, A, b, B, ... , f, F)
  * @param  StartAddr: First digit position
@@ -192,7 +268,9 @@ TM1638_SetSingleDigit_HEX(uint8_t DigitData, uint8_t DigitPos);
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t Count);
+TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler,
+                            const uint8_t *DigitData,
+                            uint8_t StartAddr, uint8_t Count);
 
 
 
@@ -211,6 +289,7 @@ TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t
  *         K2  --  |K2_SEG1|    |K2_SEG2|    |K2_SEG3|    ......    |K2_SEG8|
  *         K3  --  |K3_SEG1|    |K3_SEG2|    |K3_SEG3|    ......    |K3_SEG8|
  * 
+ * @param  Handler: Pointer to handler
  * @param  Keys: pointer to save key scan result
  *         - bit0=>K1_SEG1, bit1=>K1_SEG2, ..., bit7=>K1_SEG8,
  *         - bit8=>K2_SEG1, bit9=>K2_SEG2, ..., bit15=>K2_SEG8,
@@ -221,7 +300,7 @@ TM1638_SetMultipleDigit_HEX(const uint8_t *DigitData, uint8_t StartAddr, uint8_t
  *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_ScanKeys(uint32_t *Keys);
+TM1638_ScanKeys(TM1638_Handler_t *Handler, uint32_t *Keys);
 
 
 
