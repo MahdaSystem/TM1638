@@ -2,12 +2,7 @@
  **********************************************************************************
  * @file   TM1638_platform.h
  * @author Hossein.M (https://github.com/Hossein-M98)
- * @brief  TM1638 chip driver platform dependent part
- *         Functionalities of the this file:
- *          + Initialization the platform device to communicate with TM1638
- *          + Send START and STOP data
- *          + Send data to TM1638
- *          + Receive data from TM1638
+ * @brief  A sample Platform dependent layer for TM1638 Driver
  **********************************************************************************
  *
  * Copyright (c) 2021 Hossein.M (MIT License)
@@ -52,22 +47,27 @@ extern "C" {
  * @brief  Specify the target platform
  * @note   Uncomment the line below according to the target platform
  */ 
-// #define TM1638_PLATFORM_AVR
+#define TM1638_PLATFORM_AVR          // ATmega32
 // #define TM1638_PLATFORM_STM32        // HAL Functions
 // #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
+
 #if defined(TM1638_PLATFORM_AVR)
+/**
+ * @brief  Specify IO Pins of AVR connected to TM1638
+ */
 #define TM1638_AVR_CLK      8000000UL
+#define TM1638_CLK_DDR      DDRA
+#define TM1638_CLK_PORT     PORTA
+#define TM1638_CLK_NUM      0
 #define TM1638_DIO_DDR      DDRA
 #define TM1638_DIO_PORT     PORTA
 #define TM1638_DIO_PIN      PINA
-#define TM1638_DIO_NUM      0
-#define TM1638_CLK_DDR      DDRA
-#define TM1638_CLK_PORT     PORTA
-#define TM1638_CLK_NUM      1
+#define TM1638_DIO_NUM      1
 #define TM1638_STB_DDR      DDRA
 #define TM1638_STB_PORT     PORTA
 #define TM1638_STB_NUM      2
+
 #elif defined(TM1638_PLATFORM_STM32)
 /**
  * @brief  Specify IO Pins of STM32 connected to TM1638
@@ -78,13 +78,14 @@ extern "C" {
 #define TM1638_DIO_PIN      GPIO_PIN_1
 #define TM1638_STB_GPIO     GPIOA
 #define TM1638_STB_PIN      GPIO_PIN_2
+
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
 /**
  * @brief  Specify IO Pins of ESP32 connected to TM1638
  */
-#define TM1638_CLK_GPIO     GPIO_NUM_13
-#define TM1638_DIO_GPIO     GPIO_NUM_14
-#define TM1638_STB_GPIO     GPIO_NUM_15
+#define TM1638_CLK_GPIO     GPIO_NUM_0
+#define TM1638_DIO_GPIO     GPIO_NUM_1
+#define TM1638_STB_GPIO     GPIO_NUM_2
 #endif
 
 
@@ -95,7 +96,12 @@ extern "C" {
  ==================================================================================
  */
 
-TM1638_Result_t
+/**
+ * @brief  Initialize platfor device to communicate TM1638.
+ * @param  Handler: Pointer to handler
+ * @retval None
+ */
+void
 TM1638_Platform_Init(TM1638_Handler_t *Handler);
 
 
@@ -104,4 +110,4 @@ TM1638_Platform_Init(TM1638_Handler_t *Handler);
 }
 #endif
 
-#endif // _TM1638_PLATFORM_H_
+#endif //! _TM1638_PLATFORM_H_

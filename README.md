@@ -33,7 +33,7 @@ int main(void)
   TM1638_Handler_t Handler;
 
   TM1638_Platform_Init(&Handler);
-  TM1638_Init(&Handler, 0);
+  TM1638_Init(&Handler, TM1638DisplayTypeComCathode);
   TM1638_ConfigDisplay(&Handler, 7, TM1638DisplayStateON);
 
   while (1)
@@ -59,82 +59,88 @@ int main(void)
 #include <util/delay.h>
 #include "TM1638.h"
 
-#define DIO_DDR   DDRA
-#define DIO_PORT  PORTA
-#define DIO_PIN   PINA
-#define DIO_NUM   0
+#define TM1638_DIO_DDR   DDRA
+#define TM1638_DIO_PORT  PORTA
+#define TM1638_DIO_PIN   PINA
+#define TM1638_DIO_NUM   0
 
-#define CLK_DDR   DDRA
-#define CLK_PORT  PORTA
-#define CLK_NUM   1
+#define TM1638_CLK_DDR   DDRA
+#define TM1638_CLK_PORT  PORTA
+#define TM1638_CLK_NUM   1
 
-#define STB_DDR   DDRA
-#define STB_PORT  PORTA
-#define STB_NUM   2
+#define TM1638_STB_DDR   DDRA
+#define TM1638_STB_PORT  PORTA
+#define TM1638_STB_NUM   2
 
 
-void TM1638_Platform_DioDeInit(void)
+static void
+TM1638_PlatformInit(void)
 {
-  DIO_PORT &= ~(1<<DIO_NUM);
-  DIO_DDR &= ~(1<<DIO_NUM);
+  TM1638_CLK_DDR |= (1<<TM1638_CLK_NUM);
+  TM1638_DIO_DDR |= (1<<TM1638_DIO_NUM);
+  TM1638_STB_DDR |= (1<<TM1638_STB_NUM);
 }
-void TM1638_Platform_DioConfigOut(void)
+
+static void
+TM1638_PlatformDeInit(void)
 {
-  DIO_DDR |= (1<<DIO_NUM);
+  TM1638_CLK_DDR &= ~(1<<TM1638_CLK_NUM);
+  TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
+  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+  TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
+  TM1638_STB_DDR &= ~(1<<TM1638_STB_NUM);
+  TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
 }
-void TM1638_Platform_DioConfigIn(void)
+
+static void
+TM1638_DioConfigOut(void)
 {
-  DIO_DDR &= ~(1<<DIO_NUM);
+  TM1638_DIO_DDR |= (1<<TM1638_DIO_NUM);
 }
-void TM1638_Platform_DioWrite(uint8_t Level)
+
+static void
+TM1638_DioConfigIn(void)
+{
+  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+}
+
+static void
+TM1638_DioWrite(uint8_t Level)
 {
   if (Level)
-    DIO_PORT |= (1<<DIO_NUM);
+    TM1638_DIO_PORT |= (1<<TM1638_DIO_NUM);
   else
-    DIO_PORT &= ~(1<<DIO_NUM);
-}
-uint8_t TM1638_Platform_DioRead(void)
-{
-  return (DIO_PIN >> DIO_NUM) & 0x01;
+    TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
 }
 
+static uint8_t
+TM1638_DioRead(void)
+{
+  uint8_t Result = 1;
+  Result = (TM1638_DIO_PIN & (1 << TM1638_DIO_NUM)) ? 1 : 0;
+  return Result;
+}
 
-void TM1638_Platform_ClkDeInit(void)
-{
-  CLK_PORT &= ~(1<<CLK_NUM);
-  CLK_DDR &= ~(1<<CLK_NUM);
-}
-void TM1638_Platform_ClkConfigOut(void)
-{
-  CLK_DDR |= (1<<CLK_NUM);
-}
-void TM1638_Platform_ClkWrite(uint8_t Level)
+static void
+TM1638_ClkWrite(uint8_t Level)
 {
   if (Level)
-    CLK_PORT |= (1<<CLK_NUM);
+    TM1638_CLK_PORT |= (1<<TM1638_CLK_NUM);
   else
-    CLK_PORT &= ~(1<<CLK_NUM);
+    TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
 }
 
-void TM1638_Platform_StbDeInit(void)
-{
-  STB_PORT &= ~(1<<STB_NUM);
-  STB_DDR &= ~(1<<STB_NUM);
-}
-void TM1638_Platform_StbConfigOut(void)
-{
-  STB_DDR |= (1<<STB_NUM);
-}
-void TM1638_Platform_StbWrite(uint8_t Level)
+static void
+TM1638_StbWrite(uint8_t Level)
 {
   if (Level)
-    STB_PORT |= (1<<STB_NUM);
+    TM1638_STB_PORT |= (1<<TM1638_STB_NUM);
   else
-    STB_PORT &= ~(1<<STB_NUM);
+    TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
 }
 
-
-void TM1638_Platform_DelayUs(uint8_t Delay)
+static void
+TM1638_DelayUs(uint8_t Delay)
 {
   for (; Delay; --Delay)
     _delay_us(1);
@@ -145,20 +151,17 @@ int main(void)
 {
   TM1638_Handler_t Handler;
 
-  Handler.DioDeInit     = TM1638_Platform_DioDeInit;
-  Handler.DioConfigOut  = TM1638_Platform_DioConfigOut;
-  Handler.DioConfigIn   = TM1638_Platform_DioConfigIn;
-  Handler.DioWrite      = TM1638_Platform_DioWrite;
-  Handler.DioRead       = TM1638_Platform_DioRead;
-  Handler.ClkDeInit     = TM1638_Platform_ClkDeInit;
-  Handler.ClkConfigOut  = TM1638_Platform_ClkConfigOut;
-  Handler.ClkWrite      = TM1638_Platform_ClkWrite;
-  Handler.StbDeInit     = TM1638_Platform_StbDeInit;
-  Handler.StbConfigOut  = TM1638_Platform_StbConfigOut;
-  Handler.StbWrite      = TM1638_Platform_StbWrite;
-  Handler.DelayUs       = TM1638_Platform_DelayUs;
+  Handler.PlatformInit = TM1638_PlatformInit;
+  Handler.PlatformDeInit = TM1638_PlatformDeInit;
+  Handler.DioConfigOut = TM1638_DioConfigOut;
+  Handler.DioConfigIn = TM1638_DioConfigIn;
+  Handler.DioWrite = TM1638_DioWrite;
+  Handler.DioRead = TM1638_DioRead;
+  Handler.ClkWrite = TM1638_ClkWrite;
+  Handler.StbWrite = TM1638_StbWrite;
+  Handler.DelayUs = TM1638_DelayUs;
 
-  TM1638_Init(&Handler, 0);
+  TM1638_Init(&Handler, TM1638DisplayTypeComCathode);
   TM1638_ConfigDisplay(&Handler, 7, TM1638DisplayStateON);
 
   while (1)

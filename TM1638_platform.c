@@ -2,12 +2,7 @@
  **********************************************************************************
  * @file   TM1638_platform.c
  * @author Hossein.M (https://github.com/Hossein-M98)
- * @brief  TM1638 chip driver platform dependent part
- *         Functionalities of the this file:
- *          + Initialization the platform device to communicate with TM1638
- *          + Send START and STOP data
- *          + Send data to TM1638
- *          + Receive data from TM1638
+ * @brief  A sample Platform dependent layer for TM1638 Driver
  **********************************************************************************
  *
  * Copyright (c) 2021 Hossein.M (MIT License)
@@ -43,7 +38,10 @@
 #elif defined(TM1638_PLATFORM_STM32)
 #include "main.h"
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
+#include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
+#include "rom/ets_sys.h"
+#include "main.h"
 #endif
 
 
@@ -55,7 +53,7 @@
  */
 
 #if defined(TM1638_PLATFORM_STM32)
-static void TM1638_SetGPIO_OUT(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+void TM1638_SetGPIO_OUT(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   GPIO_InitStruct.Pin = GPIO_Pin;
@@ -65,7 +63,7 @@ static void TM1638_SetGPIO_OUT(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 									
-static void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
+void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   GPIO_InitStruct.Pin = GPIO_Pin;
@@ -75,7 +73,7 @@ static void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-static void TM1638_SetGPIO_OUT(uint32_t GPIO_Pad)
+void TM1638_SetGPIO_OUT(uint64_t GPIO_Pad)
 {
   gpio_config_t TM1638_GPIO_CONF;
   TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
@@ -86,7 +84,7 @@ static void TM1638_SetGPIO_OUT(uint32_t GPIO_Pad)
   gpio_config(&TM1638_GPIO_CONF);
 }
 
-static void TM1638_SetGPIO_IN_PU(uint32_t GPIO_Pad)
+void TM1638_SetGPIO_IN_PU(uint64_t GPIO_Pad)
 {
   gpio_config_t TM1638_GPIO_CONF;
   TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
@@ -98,41 +96,74 @@ static void TM1638_SetGPIO_IN_PU(uint32_t GPIO_Pad)
 }
 #endif
 
-
-static void TM1638_Platform_DioDeInit(static void)
+static void
+TM1638_PlatformInit(void)
 {
 #if defined(TM1638_PLATFORM_AVR)
-  TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
-  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+  TM1638_CLK_DDR |= (1<<TM1638_CLK_NUM);
+  TM1638_DIO_DDR |= (1<<TM1638_DIO_NUM);
+  TM1638_STB_DDR |= (1<<TM1638_STB_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
+  TM1638_SetGPIO_OUT(TM1638_CLK_GPIO, TM1638_CLK_PIN);
+  TM1638_SetGPIO_OUT(TM1638_STB_GPIO, TM1638_STB_PIN);
+  TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
+  uint64_t GPIO_Pad = 0;
+  GPIO_Pad = (1 << TM1638_CLK_GPIO) |
+             (1 << TM1638_STB_GPIO);
+  TM1638_SetGPIO_OUT(GPIO_Pad);
+#endif
+}
+
+static void
+TM1638_PlatformDeInit(void)
+{
+#if defined(TM1638_PLATFORM_AVR)
+  TM1638_CLK_DDR &= ~(1<<TM1638_CLK_NUM);
+  TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
+  TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
+  TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
+  TM1638_STB_DDR &= ~(1<<TM1638_STB_NUM);
+  TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
+#elif defined(TM1638_PLATFORM_STM32)
+
+#elif defined(TM1638_PLATFORM_ESP32_IDF)
+  gpio_reset_pin(TM1638_CLK_GPIO);
+  gpio_reset_pin(TM1638_STB_GPIO);
   gpio_reset_pin(TM1638_DIO_GPIO);
 #endif
 }
 
-static void TM1638_Platform_DioConfigOut(static void)
+static void
+TM1638_DioConfigOut(void)
 {
 #if defined(TM1638_PLATFORM_AVR)
   TM1638_DIO_DDR |= (1<<TM1638_DIO_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
   TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-  TM1638_SetGPIO_OUT(1<<TM1638_DIO_GPIO);
+  uint64_t GPIO_Pad = 0;
+  GPIO_Pad = (1 << TM1638_DIO_GPIO);
+  TM1638_SetGPIO_OUT(GPIO_Pad);
 #endif
 }
 
-static void TM1638_Platform_DioConfigIn(static void)
+static void
+TM1638_DioConfigIn(void)
 {
 #if defined(TM1638_PLATFORM_AVR)
   TM1638_DIO_DDR &= ~(1<<TM1638_DIO_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
   TM1638_SetGPIO_IN_PU(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-  TM1638_SetGPIO_IN_PU(1<<TM1638_DIO_GPIO);
+  uint64_t GPIO_Pad = 0;
+  GPIO_Pad = (1 << TM1638_DIO_GPIO);
+  TM1638_SetGPIO_IN_PU(GPIO_Pad);
 #endif
 }
 
-static void TM1638_Platform_DioWrite(uint8_t Level)
+static void
+TM1638_DioWrite(uint8_t Level)
 {
 #if defined(TM1638_PLATFORM_AVR)
   if (Level)
@@ -146,11 +177,12 @@ static void TM1638_Platform_DioWrite(uint8_t Level)
 #endif
 }
 
-uint8_t TM1638_Platform_DioRead(static void)
+static uint8_t
+TM1638_DioRead(void)
 {
   uint8_t Result = 1;
 #if defined(TM1638_PLATFORM_AVR)
-  Result = (DATA_PIN >> DATA_NUM) & 0x01;
+  Result = (TM1638_DIO_PIN & (1 << TM1638_DIO_NUM)) ? 1 : 0;
 #elif defined(TM1638_PLATFORM_STM32)
   Result = HAL_GPIO_ReadPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
@@ -159,30 +191,8 @@ uint8_t TM1638_Platform_DioRead(static void)
   return Result;
 }
 
-
-static void TM1638_Platform_ClkDeInit(static void)
-{
-#if defined(TM1638_PLATFORM_AVR)
-  TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
-  TM1638_CLK_DDR &= ~(1<<TM1638_CLK_NUM);
-#elif defined(TM1638_PLATFORM_STM32)
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
-  gpio_reset_pin(TM1638_CLK_GPIO);
-#endif
-}
-
-static void TM1638_Platform_ClkConfigOut(static void)
-{
-#if defined(TM1638_PLATFORM_AVR)
-  TM1638_CLK_DDR |= (1<<TM1638_CLK_NUM);
-#elif defined(TM1638_PLATFORM_STM32)
-  TM1638_SetGPIO_OUT(TM1638_CLK_GPIO, TM1638_CLK_PIN);
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
-  TM1638_SetGPIO_OUT(1<<TM1638_CLK_GPIO);
-#endif
-}
-
-static void TM1638_Platform_ClkWrite(uint8_t Level)
+static void
+TM1638_ClkWrite(uint8_t Level)
 {
 #if defined(TM1638_PLATFORM_AVR)
   if (Level)
@@ -190,36 +200,14 @@ static void TM1638_Platform_ClkWrite(uint8_t Level)
   else
     TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
-  HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level)
+  HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   gpio_set_level(TM1638_CLK_GPIO, Level);
 #endif
 }
 
-
-static void TM1638_Platform_StbDeInit(static void)
-{
-#if defined(TM1638_PLATFORM_AVR)
-  TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
-  TM1638_STB_DDR &= ~(1<<TM1638_STB_NUM);
-#elif defined(TM1638_PLATFORM_STM32)
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
-  gpio_reset_pin(TM1638_STB_GPIO);
-#endif
-}
-
-static void TM1638_Platform_StbConfigOut(static void)
-{
-#if defined(TM1638_PLATFORM_AVR)
-  TM1638_STB_DDR |= (1<<TM1638_STB_NUM);
-#elif defined(TM1638_PLATFORM_STM32)
-  TM1638_SetGPIO_OUT(TM1638_STB_GPIO, TM1638_STB_PIN);
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
-  TM1638_SetGPIO_OUT(1<<TM1638_STB_GPIO);
-#endif
-}
-
-static void TM1638_Platform_StbWrite(uint8_t Level)
+static void
+TM1638_StbWrite(uint8_t Level)
 {
 #if defined(TM1638_PLATFORM_AVR)
   if (Level)
@@ -227,49 +215,47 @@ static void TM1638_Platform_StbWrite(uint8_t Level)
   else
     TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
-  HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level)
+  HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   gpio_set_level(TM1638_STB_GPIO, Level);
 #endif
 }
 
-
-static void TM1638_Platform_DelayUs(uint8_t Delay)
+static void
+TM1638_DelayUs(uint8_t Delay)
 {
 #if defined(TM1638_PLATFORM_AVR)
   for (; Delay; --Delay)
     _delay_us(1);
 #elif defined(TM1638_PLATFORM_STM32)
-  for(uint32_t DelayCounter = 0; DelayCounter<100*Delay; DelayCounter++)
+  for (uint32_t DelayCounter = 0; DelayCounter < 100 * Delay; DelayCounter++)
     DelayCounter = DelayCounter;
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   ets_delay_us(Delay);
 #endif
 }
 
-
-
 /**
  ==================================================================================
                             ##### Public Functions #####                           
  ==================================================================================
  */
-
-TM1638_Result_t
+ 
+/**
+ * @brief  Initialize platfor device to communicate TM1638.
+ * @param  Handler: Pointer to handler
+ * @retval None
+ */
+void
 TM1638_Platform_Init(TM1638_Handler_t *Handler)
 {
-  Handler->DioDeInit     = TM1638_Platform_DioDeInit;
-  Handler->DioConfigOut  = TM1638_Platform_DioConfigOut;
-  Handler->DioConfigIn   = TM1638_Platform_DioConfigIn;
-  Handler->DioWrite      = TM1638_Platform_DioWrite;
-  Handler->DioRead       = TM1638_Platform_DioRead;
-  Handler->ClkDeInit     = TM1638_Platform_ClkDeInit;
-  Handler->ClkConfigOut  = TM1638_Platform_ClkConfigOut;
-  Handler->ClkWrite      = TM1638_Platform_ClkWrite;
-  Handler->StbDeInit     = TM1638_Platform_StbDeInit;
-  Handler->StbConfigOut  = TM1638_Platform_StbConfigOut;
-  Handler->StbWrite      = TM1638_Platform_StbWrite;
-  Handler->DelayUs       = TM1638_Platform_DelayUs;
-
-  return TM1638_OK;
+  Handler->PlatformInit = TM1638_PlatformInit;
+  Handler->PlatformDeInit = TM1638_PlatformDeInit;
+  Handler->DioConfigOut = TM1638_DioConfigOut;
+  Handler->DioConfigIn = TM1638_DioConfigIn;
+  Handler->DioWrite = TM1638_DioWrite;
+  Handler->DioRead = TM1638_DioRead;
+  Handler->ClkWrite = TM1638_ClkWrite;
+  Handler->StbWrite = TM1638_StbWrite;
+  Handler->DelayUs = TM1638_DelayUs;
 }

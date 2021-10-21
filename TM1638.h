@@ -52,6 +52,9 @@ extern "C" {
 
 
 /* Exported Constants -----------------------------------------------------------*/
+#define TM1638DisplayTypeComCathode 0
+#define TM1638DisplayTypeComAnode   1
+
 #define TM1638DisplayStateOFF 0
 #define TM1638DisplayStateON  1
 
@@ -62,23 +65,23 @@ extern "C" {
 /**
  * @brief  Handler data type
  * @note   User must initialize this this functions before using library:
- *         - DioDeInit
+ *         - PlatformInit
+ *         - PlatformDeInit
  *         - DioConfigOut
  *         - DioConfigIn
  *         - DioWrite
  *         - DioRead
- *         - ClkDeInit
- *         - ClkConfigOut
  *         - ClkWrite
- *         - StbDeInit
- *         - StbConfigOut
  *         - StbWrite
  *         - DelayUs
  */
 typedef struct TM1638_Handler_s
 {
-  // Uninitialize the GPIO that connected to DIO PIN of SHT1x
-  void (*DioDeInit)(void);
+  // Initialize the platform-dependent layer
+  void (*PlatformInit)(void);
+  // Uninitialize the platform-dependent layer
+  void (*PlatformDeInit)(void);
+
   // Config the GPIO that connected to DIO PIN of SHT1x as output
   void (*DioConfigOut)(void);
   // Config the GPIO that connected to DIO PIN of SHT1x as input
@@ -88,25 +91,18 @@ typedef struct TM1638_Handler_s
   // Read the GPIO that connected to DIO PIN of SHT1x
   uint8_t (*DioRead)(void);
 
-  // Uninitialize the GPIO that connected to CLK PIN of SHT1x
-  void (*ClkDeInit)(void);
-  // Config the GPIO that connected to CLK PIN of SHT1x as output
-  void (*ClkConfigOut)(void);
   // Set level of the GPIO that connected to CLK PIN of SHT1x
   void (*ClkWrite)(uint8_t);
 
-  // Uninitialize the GPIO that connected to STB PIN of SHT1x
-  void (*StbDeInit)(void);
-  // Config the GPIO that connected to STB PIN of SHT1x as output
-  void (*StbConfigOut)(void);
   // Set level of the GPIO that connected to STB PIN of SHT1x
   void (*StbWrite)(uint8_t);
 
   // Delay (us)
   void (*DelayUs)(uint8_t);
 
-#if (TM1638_SUPPORT_COM_ANODE)
   uint8_t DisplayType;
+
+#if (TM1638_SUPPORT_COM_ANODE)
   uint8_t DisplayRegister[16];
 #endif
 } TM1638_Handler_t;
@@ -133,12 +129,13 @@ typedef enum TM1638_Result_e
  * @brief  Initialize TM1638.
  * @param  Handler: Pointer to handler
  * @param  Type: Determine the type of display
- *         - 0: Common-Cathode
- *         - 1: Common-Anode
- * 
+ *         - TM1638DisplayTypeComCathode: Common-Cathode
+ *         - TM1638DisplayTypeComAnode:   Common-Anode
+ * @note   If 'TM1638_SUPPORT_COM_ANODE' switch is set to 0, the 'Type' argument
+ *         will be ignored 
+ *         
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
  */
 TM1638_Result_t
 TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type);
@@ -149,7 +146,6 @@ TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type);
  * @param  Handler: Pointer to handler
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
- *         - TM1638_FAIL: Operation failed.
  */
 TM1638_Result_t
 TM1638_DeInit(TM1638_Handler_t *Handler);
@@ -181,7 +177,6 @@ TM1638_DeInit(TM1638_Handler_t *Handler);
  * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
 TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
@@ -201,7 +196,6 @@ TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
  * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
 TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
@@ -222,11 +216,9 @@ TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
  * @param  Count: Number of segments to write data
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit(TM1638_Handler_t *Handler,
-                        const uint8_t *DigitData,
+TM1638_SetMultipleDigit(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                         uint8_t StartAddr, uint8_t Count);
 
 
@@ -243,7 +235,6 @@ TM1638_SetMultipleDigit(TM1638_Handler_t *Handler,
  * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
 TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
@@ -255,6 +246,7 @@ TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
  * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data. 
  *                    (0, 1, ... , 15, a, A, b, B, ... , f, F)
+ * 
  * @param  StartAddr: First digit position
  *         - 0: Seg1
  *         - 1: Seg2
@@ -265,11 +257,9 @@ TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
  * @param  Count: Number of segments to write data
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
-TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler,
-                            const uint8_t *DigitData,
+TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                             uint8_t StartAddr, uint8_t Count);
 
 
@@ -297,7 +287,6 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler,
  * 
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
- *         - TM1638_FAIL: Operation failed
  */
 TM1638_Result_t
 TM1638_ScanKeys(TM1638_Handler_t *Handler, uint32_t *Keys);
@@ -308,4 +297,4 @@ TM1638_ScanKeys(TM1638_Handler_t *Handler, uint32_t *Keys);
 }
 #endif
 
-#endif // _TM1638_H_
+#endif //! _TM1638_H_
