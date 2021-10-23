@@ -41,7 +41,6 @@
 #include "freertos/FreeRTOS.h"
 #include "driver/gpio.h"
 #include "rom/ets_sys.h"
-#include "main.h"
 #endif
 
 
