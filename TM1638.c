@@ -297,9 +297,9 @@ TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
 TM1638_Result_t
 TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
                       uint8_t DigitData, uint8_t DigitPos)
-{
+{ 
   if (Handler->DisplayType == TM1638DisplayTypeComCathode)
-    TM1638_SetMultipleDisplayRegister(Handler, &DigitPos, 1, &DigitData);
+    TM1638_SetMultipleDisplayRegister(Handler, &DigitData, DigitPos, 1);
 #if (TM1638_SUPPORT_COM_ANODE)
   else
     TM1638_SetMultipleDigit(Handler, &DigitData, DigitPos, 1);
