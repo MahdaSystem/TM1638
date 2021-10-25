@@ -212,7 +212,7 @@ TM1638_SetSingleDigit(uint8_t DigitData, uint8_t DigitPos)
 #if (TM1638SegType)
   TM1638_SetMultipleDigit(&DigitData, DigitPos, 1);
 #else
-  TM1638_SetMultipleDisplayRegister(DigitPos, 1, &DigitData);
+  TM1638_SetMultipleDisplayRegister(&DigitData, DigitPos, 1);
 #endif
 
   return TM1638_OK;
