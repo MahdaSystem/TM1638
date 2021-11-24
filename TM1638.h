@@ -1,6 +1,6 @@
 /**
  **********************************************************************************
- * @file   TM1638.c
+ * @file   TM1638.h
  * @author Hossein.M (https://github.com/Hossein-M98)
  * @brief  TM1638 chip driver
  *         Functionalities of the this file:
