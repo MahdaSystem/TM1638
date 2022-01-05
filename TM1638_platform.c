@@ -5,7 +5,7 @@
  * @brief  A sample Platform dependent layer for TM1638 Driver
  **********************************************************************************
  *
- * Copyright (c) 2021 Hossein.M (MIT License)
+ * Copyright (c) 2021 Mahda Embedded System (MIT License)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
