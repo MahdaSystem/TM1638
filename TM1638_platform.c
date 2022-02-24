@@ -72,26 +72,17 @@ void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-void TM1638_SetGPIO_OUT(uint64_t GPIO_Pad)
+void TM1638_SetGPIO_OUT(gpio_num_t GPIO_Pad)
 {
-  gpio_config_t TM1638_GPIO_CONF;
-  TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
-  TM1638_GPIO_CONF.mode = GPIO_MODE_OUTPUT;
-  TM1638_GPIO_CONF.pull_up_en = GPIO_PULLUP_DISABLE;
-  TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;
-  TM1638_GPIO_CONF.intr_type = GPIO_INTR_DISABLE;
-  gpio_config(&TM1638_GPIO_CONF);
+  gpio_reset_pin(GPIO_Pad);
+  gpio_set_direction(GPIO_Pad, GPIO_MODE_OUTPUT);
 }
 
-void TM1638_SetGPIO_IN_PU(uint64_t GPIO_Pad)
+void TM1638_SetGPIO_IN_PU(gpio_num_t GPIO_Pad)
 {
-  gpio_config_t TM1638_GPIO_CONF;
-  TM1638_GPIO_CONF.pin_bit_mask = GPIO_Pad;
-  TM1638_GPIO_CONF.mode = GPIO_MODE_DEF_INPUT;
-  TM1638_GPIO_CONF.pull_up_en = GPIO_PULLUP_ENABLE;
-  TM1638_GPIO_CONF.pull_down_en = GPIO_PULLDOWN_DISABLE;
-  TM1638_GPIO_CONF.intr_type = GPIO_INTR_DISABLE;
-  gpio_config(&TM1638_GPIO_CONF);
+  gpio_reset_pin(GPIO_Pad);
+  gpio_set_direction(GPIO_Pad, GPIO_MODE_INPUT);
+  gpio_set_pull_mode(GPIO_Pad, GPIO_PULLUP_ONLY);
 }
 #endif
 
@@ -107,10 +98,8 @@ TM1638_PlatformInit(void)
   TM1638_SetGPIO_OUT(TM1638_STB_GPIO, TM1638_STB_PIN);
   TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-  uint64_t GPIO_Pad = 0;
-  GPIO_Pad = (1 << TM1638_CLK_GPIO) |
-             (1 << TM1638_STB_GPIO);
-  TM1638_SetGPIO_OUT(GPIO_Pad);
+  TM1638_SetGPIO_OUT(TM1638_CLK_GPIO);
+  TM1638_SetGPIO_OUT(TM1638_STB_GPIO);
 #endif
 }
 
@@ -141,9 +130,7 @@ TM1638_DioConfigOut(void)
 #elif defined(TM1638_PLATFORM_STM32)
   TM1638_SetGPIO_OUT(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-  uint64_t GPIO_Pad = 0;
-  GPIO_Pad = (1 << TM1638_DIO_GPIO);
-  TM1638_SetGPIO_OUT(GPIO_Pad);
+  TM1638_SetGPIO_OUT(TM1638_DIO_GPIO);
 #endif
 }
 
@@ -155,9 +142,7 @@ TM1638_DioConfigIn(void)
 #elif defined(TM1638_PLATFORM_STM32)
   TM1638_SetGPIO_IN_PU(TM1638_DIO_GPIO, TM1638_DIO_PIN);
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
-  uint64_t GPIO_Pad = 0;
-  GPIO_Pad = (1 << TM1638_DIO_GPIO);
-  TM1638_SetGPIO_IN_PU(GPIO_Pad);
+  TM1638_SetGPIO_IN_PU(TM1638_DIO_GPIO);
 #endif
 }
 

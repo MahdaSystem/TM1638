@@ -47,7 +47,7 @@ extern "C" {
  * @brief  Specify the target platform
  * @note   Uncomment the line below according to the target platform
  */ 
-#define TM1638_PLATFORM_AVR          // ATmega32
+// #define TM1638_PLATFORM_AVR          // ATmega32
 // #define TM1638_PLATFORM_STM32        // HAL Functions
 // #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
