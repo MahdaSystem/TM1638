@@ -332,7 +332,7 @@ TM1638_SetMultipleDigit(TM1638_Handler_t *Handler, const uint8_t *DigitData,
   uint8_t i = 0, j = 0;
 
   if (Handler->DisplayType == TM1638DisplayTypeComCathode)
-    TM1638_SetMultipleDisplayRegister(Handler, StartAddr, Count, DigitData);
+    TM1638_SetMultipleDisplayRegister(Handler, DigitData, StartAddr, Count);
 #if (TM1638_SUPPORT_COM_ANODE)
   else
   {
