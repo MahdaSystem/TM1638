@@ -92,20 +92,17 @@ const uint8_t HexTo7Seg[16] =
  ==================================================================================
  */
 
-static inline void
-TM1638_StartComunication(TM1638_Handler_t *Handler)
+static inline void TM1638_StartComunication(TM1638_Handler_t *Handler)
 {
   Handler->StbWrite(0);
 }
 
-static inline void
-TM1638_StopComunication(TM1638_Handler_t *Handler)
+static inline void TM1638_StopComunication(TM1638_Handler_t *Handler)
 {
   Handler->StbWrite(1);
 }
 
-static void
-TM1638_WriteBytes(TM1638_Handler_t *Handler,
+static void TM1638_WriteBytes(TM1638_Handler_t *Handler,
                   const uint8_t *Data, uint8_t NumOfBytes)
 {
   uint8_t i, j, Buff;
@@ -125,9 +122,7 @@ TM1638_WriteBytes(TM1638_Handler_t *Handler,
   }
 }
 
-static void
-TM1638_ReadBytes(TM1638_Handler_t *Handler,
-                 uint8_t *Data, uint8_t NumOfBytes)
+static void TM1638_ReadBytes(TM1638_Handler_t *Handler, uint8_t *Data, uint8_t NumOfBytes)
 {
   uint8_t i, j, Buff;
 
@@ -151,8 +146,7 @@ TM1638_ReadBytes(TM1638_Handler_t *Handler,
   }
 }
 
-static void
-TM1638_SetMultipleDisplayRegister(TM1638_Handler_t *Handler,
+static void TM1638_SetMultipleDisplayRegister(TM1638_Handler_t *Handler,
                                   const uint8_t *DigitData,
                                   uint8_t StartAddr, uint8_t Count)
 {
@@ -171,8 +165,7 @@ TM1638_SetMultipleDisplayRegister(TM1638_Handler_t *Handler,
   TM1638_StopComunication(Handler);
 }
 
-static void
-TM1638_ScanKeyRegs(TM1638_Handler_t *Handler, uint8_t *KeyRegs)
+static void TM1638_ScanKeyRegs(TM1638_Handler_t *Handler, uint8_t *KeyRegs)
 {
   uint8_t Data = DataInstructionSet | ReadKeyScanData |
                  AutoAddressAdd | NormalMode;
@@ -203,8 +196,7 @@ TM1638_ScanKeyRegs(TM1638_Handler_t *Handler, uint8_t *KeyRegs)
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
  */
-TM1638_Result_t
-TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type)
+TM1638_Result_t TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type)
 {
   Handler->DisplayType = TM1638DisplayTypeComCathode;
 
@@ -229,8 +221,7 @@ TM1638_Init(TM1638_Handler_t *Handler, uint8_t Type)
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
  */
-TM1638_Result_t
-TM1638_DeInit(TM1638_Handler_t *Handler)
+TM1638_Result_t TM1638_DeInit(TM1638_Handler_t *Handler)
 {
   Handler->PlatformDeInit();
   return TM1638_OK;
@@ -264,8 +255,7 @@ TM1638_DeInit(TM1638_Handler_t *Handler)
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
  */
-TM1638_Result_t
-TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
+TM1638_Result_t TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
                      uint8_t Brightness, uint8_t DisplayState)
 {
   uint8_t Data = DisplayControlInstructionSet;
@@ -294,8 +284,7 @@ TM1638_ConfigDisplay(TM1638_Handler_t *Handler,
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
  */
-TM1638_Result_t
-TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
+TM1638_Result_t TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
                       uint8_t DigitData, uint8_t DigitPos)
 { 
   if (Handler->DisplayType == TM1638DisplayTypeComCathode)
@@ -323,8 +312,7 @@ TM1638_SetSingleDigit(TM1638_Handler_t *Handler,
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
  */
-TM1638_Result_t
-TM1638_SetMultipleDigit(TM1638_Handler_t *Handler, const uint8_t *DigitData,
+TM1638_Result_t TM1638_SetMultipleDigit(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                         uint8_t StartAddr, uint8_t Count)
 {
   uint8_t Shift = 0;
@@ -384,8 +372,7 @@ TM1638_SetMultipleDigit(TM1638_Handler_t *Handler, const uint8_t *DigitData,
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
  */
-TM1638_Result_t
-TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
+TM1638_Result_t TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
                           uint8_t DigitData, uint8_t DigitPos)
 {
   uint8_t DigitDataHEX = 0;
@@ -458,8 +445,7 @@ TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful
  */
-TM1638_Result_t
-TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
+TM1638_Result_t TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                             uint8_t StartAddr, uint8_t Count)
 {
   uint8_t DigitDataHEX[10];
@@ -514,8 +500,7 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
     }
   }
 
-  return TM1638_SetMultipleDigit(Handler,
-                                 (const uint8_t *)DigitDataHEX, StartAddr, Count);
+  return TM1638_SetMultipleDigit(Handler, (const uint8_t *)DigitDataHEX, StartAddr, Count);
 }
 
 
