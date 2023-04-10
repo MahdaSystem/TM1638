@@ -393,7 +393,7 @@ TM1638_SetSingleDigit_HEX(TM1638_Handler_t *Handler,
 
   DigitData &= 0x7F;
 
-  if (DigitData >= 0 && DigitData <= 15)
+  if (DigitData <= 15)
   {
     DigitDataHEX = HexTo7Seg[DigitData] | DecimalPoint;
   }
