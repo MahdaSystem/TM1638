@@ -1,5 +1,5 @@
 # TM1638 Library
-Library for handling TM163 LED display driver.
+Library for handling TM1638 LED display driver.
 
 ## Library Features
 -   Support for both Common Anode and Common Cathode Seven-segment displays
