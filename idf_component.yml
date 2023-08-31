@@ -1,0 +1,11 @@
+version: "2.0.0"
+
+description: TM1638 driver for AVR (ATmega32), STM32 (HAL) and ESP32 (esp-idf)
+url: https://github.com/MahdaSystem/TM1638
+repository: https://github.com/MahdaSystem/TM1638.git
+documentation: https://github.com/MahdaSystem/TM1638#readme
+issues: https://github.com/MahdaSystem/TM1638/issues
+
+dependencies:
+  # Required IDF version
+  idf: ">=4.2"
