@@ -1,0 +1,22 @@
+menu "TM1638 config"
+
+    config TM1638_CLK_GPIO
+        int "TM1638 CLK Pin"
+        default 0
+        help
+            GPIO number (IOxx) for the TM638 CLK pin.
+
+
+    config TM1638_DIO_GPIO
+        int "TM1638 DIO Pin"
+        default 1
+        help
+            GPIO number (IOxx) for the TM638 DIO pin.
+
+    config TM1638_STB_GPIO
+        int "TM1638 STB Pin"
+        default 2
+        help
+            GPIO number (IOxx) for the TM638 STB pin.
+
+endmenu  # TM1638
