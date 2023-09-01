@@ -51,7 +51,6 @@ extern "C" {
 // #define TM1638_PLATFORM_STM32        // HAL Functions
 // #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
-
 #if defined(TM1638_PLATFORM_AVR)
 /**
  * @brief  Specify IO Pins of AVR connected to TM1638
@@ -79,13 +78,14 @@ extern "C" {
 #define TM1638_STB_GPIO     GPIOA
 #define TM1638_STB_PIN      GPIO_PIN_2
 
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
+#elif defined(TM1638_PLATFORM_ESP32_IDF) || defined(ESP_PLATFORM)
 /**
  * @brief  Specify IO Pins of ESP32 connected to TM1638
+ * @note   `ESP_PLATFORM` automatically activates (value TRUE) when building with ESP-IDF build chain
  */
-#define TM1638_CLK_GPIO     GPIO_NUM_0
-#define TM1638_DIO_GPIO     GPIO_NUM_1
-#define TM1638_STB_GPIO     GPIO_NUM_2
+#define TM1638_CLK_GPIO     (gpio_num_t)CONFIG_TM1638_CLK_GPIO
+#define TM1638_DIO_GPIO     (gpio_num_t)CONFIG_TM1638_DIO_GPIO
+#define TM1638_STB_GPIO     (gpio_num_t)CONFIG_TM1638_STB_GPIO
 #endif
 
 

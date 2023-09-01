@@ -1,0 +1,3 @@
+idf_component_register(SRCS "tm1638.c" "TM1638_platform.c"
+        INCLUDE_DIRS "."
+        REQUIRES driver)
