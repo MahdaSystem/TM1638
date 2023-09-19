@@ -54,22 +54,39 @@
 #if defined(TM1638_PLATFORM_STM32)
 void TM1638_SetGPIO_OUT(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // GPIO_InitStruct.Pin = GPIO_Pin;
+  // GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  // GPIO_InitStruct.Pull = GPIO_NOPULL;
+  // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  // HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
   GPIO_InitStruct.Pin = GPIO_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 									
 void TM1638_SetGPIO_IN_PU(GPIO_TypeDef *GPIOx, uint32_t GPIO_Pin)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // GPIO_InitStruct.Pin = GPIO_Pin;
+  // GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  // GPIO_InitStruct.Pull = GPIO_PULLUP;
+  // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  // HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
   GPIO_InitStruct.Pin = GPIO_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+  LL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
 void TM1638_SetGPIO_OUT(gpio_num_t GPIO_Pad)
@@ -155,7 +172,13 @@ TM1638_DioWrite(uint8_t Level)
   else
     TM1638_DIO_PORT &= ~(1<<TM1638_DIO_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
-  HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, Level);
+  //HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, Level);
+  if( Level != 0u) {
+    LL_GPIO_SetOutputPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+  }
+  else {
+    LL_GPIO_ResetOutputPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+  }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   gpio_set_level(TM1638_DIO_GPIO, Level);
 #endif
@@ -168,7 +191,8 @@ TM1638_DioRead(void)
 #if defined(TM1638_PLATFORM_AVR)
   Result = (TM1638_DIO_PIN & (1 << TM1638_DIO_NUM)) ? 1 : 0;
 #elif defined(TM1638_PLATFORM_STM32)
-  Result = HAL_GPIO_ReadPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+  //Result = HAL_GPIO_ReadPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
+  Result = (LL_GPIO_ReadInputPort(TM1638_DIO_GPIO) & TM1638_DIO_PIN) == TM1638_DIO_PIN;
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   Result = gpio_get_level(TM1638_DIO_GPIO);
 #endif
@@ -184,7 +208,13 @@ TM1638_ClkWrite(uint8_t Level)
   else
     TM1638_CLK_PORT &= ~(1<<TM1638_CLK_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
-  HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level);
+  //HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level);
+    if( Level != 0u) {
+    LL_GPIO_SetOutputPin(TM1638_CLK_GPIO, TM1638_CLK_PIN);
+  }
+  else {
+    LL_GPIO_ResetOutputPin(TM1638_CLK_GPIO, TM1638_CLK_PIN);
+  }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   gpio_set_level(TM1638_CLK_GPIO, Level);
 #endif
@@ -199,7 +229,13 @@ TM1638_StbWrite(uint8_t Level)
   else
     TM1638_STB_PORT &= ~(1<<TM1638_STB_NUM);
 #elif defined(TM1638_PLATFORM_STM32)
-  HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level);
+  //HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level);
+  if( Level != 0u) {
+    LL_GPIO_SetOutputPin(TM1638_STB_GPIO, TM1638_STB_PIN);
+  }
+  else {
+    LL_GPIO_ResetOutputPin(TM1638_STB_GPIO, TM1638_STB_PIN);
+  }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
   gpio_set_level(TM1638_STB_GPIO, Level);
 #endif
