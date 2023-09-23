@@ -78,7 +78,7 @@ extern "C" {
 #define TM1638_DIO_GPIO     GPIOA
 #define TM1638_DIO_PIN      GPIO_PIN_1
 #define TM1638_STB_GPIO     GPIOA
-#define TM1638_STB_PIN      GPIO_PIN_3
+#define TM1638_STB_PIN      GPIO_PIN_2
 
 #elif defined(TM1638_PLATFORM_STM32_LL)
 /**
@@ -87,9 +87,9 @@ extern "C" {
 #define TM1638_CLK_GPIO     GPIOA
 #define TM1638_CLK_PIN      LL_GPIO_PIN_1
 #define TM1638_DIO_GPIO     GPIOA
-#define TM1638_DIO_PIN      LL_GPIO_PIN_4
+#define TM1638_DIO_PIN      LL_GPIO_PIN_2
 #define TM1638_STB_GPIO     GPIOA
-#define TM1638_STB_PIN      LL_GPIO_PIN_0
+#define TM1638_STB_PIN      LL_GPIO_PIN_3
 
 
 #elif defined(TM1638_PLATFORM_ESP32_IDF)

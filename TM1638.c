@@ -105,7 +105,7 @@ const uint8_t HexTo7Seg[40] =
   0x66, // y
   0x08, // _
   0x40, // -
-  0x01  // high bar
+  0x01  // Overscore
 };
 
 
