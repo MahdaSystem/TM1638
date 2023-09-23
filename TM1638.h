@@ -262,7 +262,26 @@ TM1638_Result_t
 TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                             uint8_t StartAddr, uint8_t Count);
 
-
+/**
+ * @brief  Set data to multiple digits in char format
+ * @param  Handler: Pointer to handler
+ * @param  DigitData: Array to Digits data. 
+ *                    (0, 1, ... , 15, a, A, b, B, ...)
+ * 
+ * @param  StartAddr: First digit position
+ *         - 0: Seg1
+ *         - 1: Seg2
+ *         - .
+ *         - .
+ *         - .
+ * 
+ * @param  Count: Number of segments to write data
+ * @retval TM1638_Result_t
+ *         - TM1638_OK: Operation was successful
+ */
+TM1638_Result_t
+TM1638_SetMultipleDigit_CHAR(TM1638_Handler_t *Handler, const uint8_t *DigitData,
+                            uint8_t StartAddr, uint8_t Count);
 
 /** 
  ==================================================================================
