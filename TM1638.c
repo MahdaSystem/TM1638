@@ -531,11 +531,6 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
         DigitDataHEX[i] = HexTo7Seg[0x0F] | DecimalPoint;
         break;
 
-      case 0x40:
-        DigitDataHEX[i] = HexTo7Seg[0x10] | DecimalPoint;
-      break;
-
-
       default:
         DigitDataHEX[i] = 0;
         break;
