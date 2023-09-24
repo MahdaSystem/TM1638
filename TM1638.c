@@ -548,7 +548,7 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
  * @param  DigitData: Array to Digits data. 
  *                    Supported chars 0,1,2,3,4,5,6,7,8,9
  *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,t,u,U,y
- *                                    _,-,high bar (use ~ to set)
+ *                                    _,-,Overscore (use ~ to set)
  * 
  * @param  StartAddr: First digit position
  *         - 0: Seg1
