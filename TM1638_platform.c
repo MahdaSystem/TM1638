@@ -182,10 +182,12 @@ TM1638_DioWrite(uint8_t Level)
 #elif defined(TM1638_PLATFORM_STM32)
   HAL_GPIO_WritePin(TM1638_DIO_GPIO, TM1638_DIO_PIN, Level);
 #elif defined(TM1638_PLATFORM_STM32_LL)
-  if( Level != 0u) {
+  if(Level)
+  {
     LL_GPIO_SetOutputPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
   }
-  else {
+  else
+  {
     LL_GPIO_ResetOutputPin(TM1638_DIO_GPIO, TM1638_DIO_PIN);
   }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
@@ -220,10 +222,12 @@ TM1638_ClkWrite(uint8_t Level)
 #elif defined(TM1638_PLATFORM_STM32)
   HAL_GPIO_WritePin(TM1638_CLK_GPIO, TM1638_CLK_PIN, Level);
 #elif defined(TM1638_PLATFORM_STM32_LL)
-  if( Level != 0u) {
+  if(Level)
+  {
     LL_GPIO_SetOutputPin(TM1638_CLK_GPIO, TM1638_CLK_PIN);
   }
-  else {
+  else
+  {
     LL_GPIO_ResetOutputPin(TM1638_CLK_GPIO, TM1638_CLK_PIN);
   }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
@@ -242,10 +246,12 @@ TM1638_StbWrite(uint8_t Level)
 #elif defined(TM1638_PLATFORM_STM32)
   HAL_GPIO_WritePin(TM1638_STB_GPIO, TM1638_STB_PIN, Level);
 #elif defined(TM1638_PLATFORM_STM32_LL)
-  if( Level != 0u) {
+  if(Level)
+  {
     LL_GPIO_SetOutputPin(TM1638_STB_GPIO, TM1638_STB_PIN);
   }
-  else {
+  else
+  {
     LL_GPIO_ResetOutputPin(TM1638_STB_GPIO, TM1638_STB_PIN);
   }
 #elif defined(TM1638_PLATFORM_ESP32_IDF)

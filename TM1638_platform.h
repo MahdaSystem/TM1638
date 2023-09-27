@@ -49,7 +49,7 @@ extern "C" {
  */ 
 // #define TM1638_PLATFORM_AVR          // ATmega32
 // #define TM1638_PLATFORM_STM32        // HAL Functions
-#define TM1638_PLATFORM_STM32_LL        // LL Functions
+// #define TM1638_PLATFORM_STM32_LL     // LL Functions
 // #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
 
@@ -90,7 +90,6 @@ extern "C" {
 #define TM1638_DIO_PIN      LL_GPIO_PIN_2
 #define TM1638_STB_GPIO     GPIOA
 #define TM1638_STB_PIN      LL_GPIO_PIN_3
-
 
 #elif defined(TM1638_PLATFORM_ESP32_IDF)
 /**

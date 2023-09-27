@@ -262,6 +262,7 @@ TM1638_Result_t
 TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
                             uint8_t StartAddr, uint8_t Count);
 
+
 /**
  * @brief  Set data to multiple digits in char format
  * @param  Handler: Pointer to handler
@@ -283,7 +284,9 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
  */
 TM1638_Result_t
 TM1638_SetMultipleDigit_CHAR(TM1638_Handler_t *Handler, const uint8_t *DigitData,
-                            uint8_t StartAddr, uint8_t Count);
+                             uint8_t StartAddr, uint8_t Count);
+
+
 
 /** 
  ==================================================================================
