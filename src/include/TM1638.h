@@ -42,13 +42,13 @@ extern "C" {
 
 /* Includes ---------------------------------------------------------------------*/
 #include <stdint.h>
+#include "TM1638_config.h"
 
 
-/* Functionality Options --------------------------------------------------------*/
-/**
- * @brief  Enable support for Common Anode displays
- */   
-#define TM1638_SUPPORT_COM_ANODE  1
+/* Configurations ---------------------------------------------------------------*/
+#ifndef TM1638_CONFIG_SUPPORT_COM_ANODE
+  #define TM1638_CONFIG_SUPPORT_COM_ANODE  1
+#endif
 
 
 /* Exported Constants -----------------------------------------------------------*/
@@ -102,7 +102,7 @@ typedef struct TM1638_Handler_s
 
   uint8_t DisplayType;
 
-#if (TM1638_SUPPORT_COM_ANODE)
+#if (TM1638_CONFIG_SUPPORT_COM_ANODE)
   uint8_t DisplayRegister[16];
 #endif
 } TM1638_Handler_t;
@@ -131,8 +131,8 @@ typedef enum TM1638_Result_e
  * @param  Type: Determine the type of display
  *         - TM1638DisplayTypeComCathode: Common-Cathode
  *         - TM1638DisplayTypeComAnode:   Common-Anode
- * @note   If 'TM1638_SUPPORT_COM_ANODE' switch is set to 0, the 'Type' argument
- *         will be ignored 
+ * @note   If 'TM1638_CONFIG_SUPPORT_COM_ANODE' switch is set to 0, the 'Type'
+ *         argument will be ignored 
  *         
  * @retval TM1638_Result_t
  *         - TM1638_OK: Operation was successful.
@@ -268,8 +268,8 @@ TM1638_SetMultipleDigit_HEX(TM1638_Handler_t *Handler, const uint8_t *DigitData,
  * @param  Handler: Pointer to handler
  * @param  DigitData: Array to Digits data. 
  *                    Supported chars 0,1,2,3,4,5,6,7,8,9
- *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,t,u,U,y
- *                                    _,-,Overscore (use ~ to set)
+ *                                    A,b,C,d,E,F,g,G,h,H,i,I,j,l,L,n,N,o,O,P,q,r,S,
+ *                                    t,u,U,y,_,-,Overscore (use ~ to set)
  * 
  * @param  StartAddr: First digit position
  *         - 0: Seg1

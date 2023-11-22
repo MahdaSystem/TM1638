@@ -43,17 +43,7 @@ extern "C" {
 
 
 /* Functionality Options --------------------------------------------------------*/
-/**
- * @brief  Specify the target platform
- * @note   Uncomment the line below according to the target platform
- */ 
-// #define TM1638_PLATFORM_AVR          // ATmega32
-// #define TM1638_PLATFORM_STM32        // HAL Functions
-// #define TM1638_PLATFORM_STM32_LL     // LL Functions
-// #define TM1638_PLATFORM_ESP32_IDF    // ESP-IDF
 
-
-#if defined(TM1638_PLATFORM_AVR)
 /**
  * @brief  Specify IO Pins of AVR connected to TM1638
  */
@@ -69,37 +59,6 @@ extern "C" {
 #define TM1638_STB_PORT     PORTA
 #define TM1638_STB_NUM      2
 
-#elif defined(TM1638_PLATFORM_STM32)
-/**
- * @brief  Specify IO Pins of STM32 connected to TM1638
- */
-#define TM1638_CLK_GPIO     GPIOA
-#define TM1638_CLK_PIN      GPIO_PIN_0
-#define TM1638_DIO_GPIO     GPIOA
-#define TM1638_DIO_PIN      GPIO_PIN_1
-#define TM1638_STB_GPIO     GPIOA
-#define TM1638_STB_PIN      GPIO_PIN_2
-
-#elif defined(TM1638_PLATFORM_STM32_LL)
-/**
- * @brief  Specify IO Pins of STM32 connected to TM1638 using LL
- */
-#define TM1638_CLK_GPIO     GPIOA
-#define TM1638_CLK_PIN      LL_GPIO_PIN_1
-#define TM1638_DIO_GPIO     GPIOA
-#define TM1638_DIO_PIN      LL_GPIO_PIN_2
-#define TM1638_STB_GPIO     GPIOA
-#define TM1638_STB_PIN      LL_GPIO_PIN_3
-
-#elif defined(TM1638_PLATFORM_ESP32_IDF)
-/**
- * @brief  Specify IO Pins of ESP32 connected to TM1638
- */
-#define TM1638_CLK_GPIO     GPIO_NUM_0
-#define TM1638_DIO_GPIO     GPIO_NUM_1
-#define TM1638_STB_GPIO     GPIO_NUM_2
-#endif
-
 
 
 /**
@@ -109,7 +68,7 @@ extern "C" {
  */
 
 /**
- * @brief  Initialize platfor device to communicate TM1638.
+ * @brief  Initialize platform device to communicate TM1638.
  * @param  Handler: Pointer to handler
  * @retval None
  */
