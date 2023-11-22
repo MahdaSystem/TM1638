@@ -47,7 +47,6 @@ extern "C" {
 /**
  * @brief  Specify IO Pins of AVR connected to TM1638
  */
-#define TM1638_AVR_CLK      8000000UL
 #define TM1638_CLK_DDR      DDRA
 #define TM1638_CLK_PORT     PORTA
 #define TM1638_CLK_NUM      0

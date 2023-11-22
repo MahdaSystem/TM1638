@@ -30,8 +30,6 @@
   
 /* Includes ---------------------------------------------------------------------*/
 #include "TM1638_platform.h"
-
-#define F_CPU TM1638_AVR_CLK
 #include <avr/io.h>
 #include <util/delay.h>
 
