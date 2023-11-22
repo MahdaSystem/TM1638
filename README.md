@@ -13,7 +13,7 @@ It is easy to port this library to any platform. But now it is ready for use in:
 - ESP32 (esp-idf)
 
 ## How To Use
-1. Add `TM1638.h` and `TM1638.c` files to your project.  It is optional to use `TM1638_platform.h` and `TM1638_platform.c` files (open and config `TM1638_platform.h` file).
+1. Add `TM1638.h`, `TM1638_config.h` and `TM1638.c` files to your project.  It is optional to use `TM1638_platform.h` and `TM1638_platform.c` files (open and config `TM1638_platform.h` file).
 2. Initialize platform-dependent part of handler.
 4. Call `TM1638_Init()`.
 5. Call `TM1638_ConfigDisplay()` to config display.
