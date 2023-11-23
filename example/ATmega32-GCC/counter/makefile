@@ -14,12 +14,12 @@ SRC = ./main.c ../../../src/TM1638.c ../../../port/ATmega32-GCC/TM1638_platform.
 
 ifeq ($(OS),Windows_NT)
 FIXPATH = $(subst /,\,$1)
-RMD := rd /s /q
-MD := mkdir
+RMD = rd /s /q
+MD = mkdir
 else
 FIXPATH = $1
 RMD = rm -r
-MD := mkdir -p
+MD = mkdir -p
 endif
 
 
