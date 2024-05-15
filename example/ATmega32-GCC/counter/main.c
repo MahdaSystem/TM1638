@@ -39,7 +39,6 @@ int main(void)
   TM1638_Handler_t Handler = {0};
 
   TM1638_Platform_Init(&Handler);
-  TM1638_Platform_Init(&Handler);
   TM1638_Init(&Handler, TM1638DisplayTypeComCathode);
   TM1638_ConfigDisplay(&Handler, 7, TM1638DisplayStateON);
 
